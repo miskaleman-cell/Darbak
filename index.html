@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>دربك · عدّاد الإشارات · نزيب – عنتاب</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d6b47">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root{
+  --bg: #10151a;
+  --bg-soft: radial-gradient(ellipse 120% 80% at 50% -10%, #182129 0%, #10151a 55%);
+  --elev: #1a2126;
+  --elev-2: #212a30;
+  --border: #2a343b;
+  --ink: #eeeae1;
+  --muted: #8b969c;
+  --muted-2: #5e6a70;
+  --green: #12875a;
+  --green-strong: #0d6b47;
+  --green-glow: rgba(18,135,90,0.45);
+  --red: #d6473c;
+  --red-glow: rgba(214,71,60,0.4);
+  --amber: #e2a13d;
+  --radius: 18px;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+html,body{
+  background: var(--bg-soft), var(--bg);
+  color: var(--ink);
+  font-family: 'Cairo', system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+  padding: 28px 16px 60px;
+}
+
+.mono{ font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+.app{
+  width:100%;
+  max-width: 440px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+/* ---------- header ---------- */
+.header{ position:relative; text-align:center; padding: 4px 0 2px; }
+.title-brand{ color: var(--green); }
+.about-btn{
+  position:absolute;
+  top:0; inset-inline-start:0;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background: var(--elev);
+  color: var(--muted);
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition: color .2s ease, border-color .2s ease;
+}
+.about-btn:hover{ color: var(--green); border-color: var(--green); }
+
+/* ---------- about overlay ---------- */
+.about-overlay{
+  position:fixed; inset:0;
+  background: rgba(8,11,14,0.72);
+  backdrop-filter: blur(4px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:100;
+  opacity:0; pointer-events:none;
+  transition: opacity .25s ease;
+}
+.about-overlay.open{ opacity:1; pointer-events:auto; }
+.about-sheet{
+  position:relative;
+  width:100%;
+  max-width: 440px;
+  max-height: 86vh;
+  overflow-y:auto;
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius: 22px 22px 0 0;
+  padding: 26px 22px 30px;
+  text-align:center;
+  transform: translateY(24px);
+  transition: transform .25s ease;
+}
+.about-overlay.open .about-sheet{ transform: translateY(0); }
+.about-close{
+  position:absolute;
+  top:14px; inset-inline-start:14px;
+  width:30px; height:30px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background: var(--elev-2);
+  color: var(--muted);
+  cursor:pointer;
+}
+.about-icon{
+  width:84px; height:84px;
+  margin: 0 auto 12px;
+  border-radius: 22px;
+  overflow:hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.about-icon img{ width:100%; height:100%; display:block; }
+.about-appname{ font-size:24px; font-weight:900; color: var(--green); }
+.about-tagline{ color: var(--muted); font-size:13px; margin-top:4px; margin-bottom:20px; font-weight:600; }
+.about-block{
+  text-align:start;
+  background: var(--elev-2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 16px;
+  margin-bottom:12px;
+}
+.about-label{
+  font-family:'JetBrains Mono';
+  font-size:11px;
+  letter-spacing:1px;
+  color: var(--green);
+  font-weight:600;
+  margin-bottom:6px;
+}
+.about-value{ font-size:14px; font-weight:700; color: var(--ink); line-height:1.7; }
+.about-email{
+  display:inline-block;
+  margin-top:4px;
+  font-size:12.5px;
+  font-weight:600;
+  color: var(--green);
+  text-decoration:none;
+  direction:ltr;
+}
+.about-email:hover{ text-decoration:underline; }
+.about-desc{ font-weight:400; font-size:13.5px; color: var(--muted); }
+.lang-switcher{
+  display:flex;
+  gap:8px;
+}
+.lang-btn{
+  flex:1;
+  background: var(--elev);
+  border:1.5px solid var(--border);
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:13px;
+  border-radius:10px;
+  padding:9px 6px;
+  cursor:pointer;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.lang-btn.active{
+  color:#f4fbf7;
+  border-color: var(--green);
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-strong) 100%);
+}
+.about-copyright{
+  margin-top:8px;
+  font-size:11.5px;
+  color: var(--muted-2);
+  line-height:1.8;
+}
+.eyebrow{
+  font-family:'JetBrains Mono';
+  font-size:11px;
+  letter-spacing:2.5px;
+  color: var(--green);
+  font-weight:600;
+  margin-bottom:8px;
+  direction: ltr;
+}
+.title{
+  font-size:26px;
+  font-weight:900;
+  letter-spacing:-0.3px;
+}
+.subtitle{
+  color: var(--muted);
+  font-size:13.5px;
+  margin-top:5px;
+  font-weight:600;
+}
+
+/* ---------- route tabs ---------- */
+.route-tabs-scroll{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.route-tabs-scroll::-webkit-scrollbar{ display:none; }
+.route-tabs{
+  display:flex;
+  gap:8px;
+  padding: 2px 2px 4px;
+}
+.route-tab{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background: var(--elev);
+  border:1.5px solid var(--border);
+  border-radius:999px;
+  padding:7px 7px 7px 14px;
+  cursor:pointer;
+  transition: border-color .2s ease, background .2s ease;
+}
+.route-tab.active{
+  border-color: var(--green);
+  background: rgba(18,135,90,0.12);
+}
+.route-tab-label{
+  font-size:13px;
+  font-weight:700;
+  color: var(--ink);
+  white-space:nowrap;
+}
+.route-tab.active .route-tab-label{ color: var(--green); }
+.route-tab-edit{
+  flex-shrink:0;
+  width:22px; height:22px;
+  border-radius:50%;
+  border:none;
+  background: var(--elev-2);
+  color: var(--muted);
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+.route-tab-add{
+  flex-shrink:0;
+  background:transparent;
+  border:1.5px dashed var(--border);
+  border-radius:999px;
+  padding:9px 16px;
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.route-tab-add:hover{ color: var(--green); border-color: var(--green); }
+
+.route-editor-sheet{ text-align:center; }
+.route-editor-field{ text-align:start; margin-bottom:14px; }
+.route-editor-field label{
+  display:block;
+  font-size:12px;
+  color: var(--muted);
+  margin-bottom:6px;
+  font-weight:700;
+}
+.route-editor-field input{
+  width:100%;
+  background: var(--elev-2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color: var(--ink);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:15px;
+  text-align:start;
+  padding:11px 12px;
+  outline:none;
+}
+.route-editor-field input:focus{ border-color: var(--green); }
+.route-editor-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:6px;
+}
+
+/* ---------- direction toggle ---------- */
+.dir-toggle{
+  display:flex;
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius: 999px;
+  padding:4px;
+  gap:4px;
+}
+.dir-btn{
+  flex:1;
+  border:none;
+  background:transparent;
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:14px;
+  padding:11px 8px;
+  border-radius:999px;
+  cursor:pointer;
+  transition: background .25s ease, color .25s ease;
+}
+.dir-btn.active{
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-strong) 100%);
+  color:#f4fbf7;
+  box-shadow: 0 3px 14px var(--green-glow);
+}
+
+/* ---------- signal list ---------- */
+.route-card{
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.route-cities{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:14px;
+  font-weight:800;
+  color: var(--ink);
+  margin-bottom:10px;
+  padding:0 2px;
+}
+.route-cities span:last-child{ color: var(--green); }
+.city-edit-btn{
+  flex-shrink:0;
+  width:24px; height:24px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background: var(--elev-2);
+  color: var(--muted);
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+  transition: color .2s ease, border-color .2s ease;
+}
+.city-edit-btn:hover{ color: var(--green); border-color: var(--green); }
+.route-card-toolbar{
+  display:flex;
+  justify-content:center;
+  margin-bottom:12px;
+}
+.list-edit-toggle{
+  background: transparent;
+  border:1px solid var(--border);
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:11.5px;
+  border-radius:999px;
+  padding:5px 11px;
+  cursor:pointer;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.list-edit-toggle.active{
+  color: var(--green);
+  border-color: var(--green);
+  background: rgba(18,135,90,0.1);
+}
+
+.signal-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.signal-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background: var(--elev-2);
+  border:1.5px solid var(--border);
+  border-radius:13px;
+  padding:11px 12px;
+  cursor:pointer;
+  transition: border-color .2s ease, background .2s ease;
+}
+.signal-row:active{ background: #26302f; }
+.signal-row.current{
+  border-color: var(--amber);
+  background: rgba(226,161,61,0.09);
+  box-shadow: 0 0 0 3px rgba(226,161,61,0.12);
+}
+.signal-row-badge{
+  flex-shrink:0;
+  width:30px; height:30px;
+  border-radius:50%;
+  background: var(--elev);
+  border:1.5px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'JetBrains Mono';
+  font-weight:700;
+  font-size:13px;
+  color: var(--muted);
+}
+.signal-row.current .signal-row-badge{
+  background: var(--amber);
+  border-color: var(--amber);
+  color:#221a0c;
+}
+.signal-row.has-data .signal-row-badge{ color: var(--green); border-color: var(--green); }
+.signal-row.slow .signal-row-badge{ color: var(--red); border-color: var(--red); }
+
+.signal-row-name{
+  flex:1;
+  min-width:0;
+  font-size:14.5px;
+  font-weight:700;
+  color: var(--ink);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.signal-row-name.unnamed{ color: var(--muted-2); font-weight:600; }
+
+.signal-row-stats{
+  flex-shrink:0;
+  display:flex;
+  gap:8px;
+  font-family:'JetBrains Mono';
+  font-size:11.5px;
+  color: var(--muted);
+}
+.signal-row-stats .s-red{ color:#e08079; }
+.signal-row-stats .s-green{ color:#6fc79c; }
+
+/* ---------- signal list: edit mode ---------- */
+.signal-row.edit-mode{ cursor:default; }
+.signal-row-name-input{
+  flex:1;
+  min-width:0;
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color: var(--ink);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:14px;
+  padding:7px 9px;
+  outline:none;
+}
+.signal-row-name-input:focus{ border-color: var(--green); }
+.signal-row-actions{
+  flex-shrink:0;
+  display:flex;
+  gap:4px;
+}
+.row-action-btn{
+  width:28px; height:28px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background: var(--elev);
+  color: var(--muted);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+.row-action-btn:disabled{ opacity:0.3; cursor:default; }
+.row-action-btn.danger{ color: var(--red); border-color: rgba(214,71,60,0.4); }
+
+.add-signal-btn{
+  margin-top:10px;
+  width:100%;
+  background:transparent;
+  border:1.5px dashed var(--border);
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:13.5px;
+  border-radius:13px;
+  padding:12px;
+  cursor:pointer;
+  transition: color .2s ease, border-color .2s ease;
+}
+.add-signal-btn:hover{ color: var(--green); border-color: var(--green); }
+
+/* ---------- signal card ---------- */
+.signal-card{
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 22px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 18px;
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+.signal-card.state-green{
+  border-color: rgba(18,135,90,0.5);
+  box-shadow: 0 0 0 1px rgba(18,135,90,0.15), 0 12px 30px -14px var(--green-glow);
+}
+.signal-card.state-red{
+  border-color: rgba(214,71,60,0.5);
+  box-shadow: 0 0 0 1px rgba(214,71,60,0.15), 0 12px 30px -14px var(--red-glow);
+}
+
+.signal-index{
+  font-family:'JetBrains Mono';
+  font-size:13px;
+  color: var(--muted);
+  letter-spacing:1px;
+}
+.signal-index b{ color: var(--ink); font-size:15px; }
+
+.signal-head{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.edit-name-btn{
+  background: var(--elev-2);
+  border:1px solid var(--border);
+  color: var(--muted);
+  font-size:11px;
+  font-family:'Cairo';
+  font-weight:700;
+  border-radius:8px;
+  padding:3px 8px;
+  cursor:pointer;
+}
+.signal-name{
+  font-size:16px;
+  font-weight:800;
+  color: var(--ink);
+  min-height:20px;
+  text-align:center;
+}
+.signal-name-input{
+  width:100%;
+  max-width:260px;
+  background: var(--elev-2);
+  border:1px solid var(--green);
+  border-radius:10px;
+  color: var(--ink);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:15px;
+  text-align:center;
+  padding:9px 10px;
+  outline:none;
+}
+
+.avg-row{
+  font-size:13px;
+  color: var(--muted);
+  text-align:center;
+}
+.avg-row b{
+  color: var(--ink);
+  font-family:'JetBrains Mono';
+  font-weight:700;
+}
+
+.timer{
+  font-family:'JetBrains Mono';
+  font-size:52px;
+  font-weight:700;
+  letter-spacing:1px;
+  color: var(--ink);
+  line-height:1;
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.timer.idle{ color: var(--muted-2); font-size:40px; }
+.timer.overtime{ color: var(--amber); }
+.timer.overtime .led{ background: var(--amber); box-shadow: 0 0 10px rgba(226,161,61,0.4); }
+.timer .led{
+  width:12px; height:12px;
+  border-radius:50%;
+  background: var(--muted-2);
+}
+.timer.running .led{
+  background: var(--red);
+  box-shadow: 0 0 10px var(--red-glow);
+  animation: blink 1s steps(2) infinite;
+}
+.timer.running.phase-green .led{
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green-glow);
+}
+@keyframes blink{ 50%{ opacity:0.25; } }
+
+.phase-label{
+  font-family:'Cairo';
+  font-weight:800;
+  font-size:12.5px;
+  letter-spacing:0.5px;
+  color: var(--red);
+  min-height:16px;
+}
+.phase-label.green{ color: var(--green); }
+
+.actions{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.btn{
+  border:none;
+  border-radius: 14px;
+  padding:16px 14px;
+  font-family:'Cairo';
+  font-weight:800;
+  font-size:15.5px;
+  cursor:pointer;
+  transition: transform .12s ease, filter .2s ease;
+  width:100%;
+}
+.btn:active{ transform: scale(0.98); }
+.btn-stop{
+  background: linear-gradient(180deg, var(--red) 0%, #b83a30 100%);
+  color:#fff5f4;
+}
+.btn-green{
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-strong) 100%);
+  color:#f4fbf7;
+}
+.row-2{ display:flex; gap:10px; }
+.btn-ghost{
+  background: var(--elev-2);
+  color: var(--ink);
+  border:1px solid var(--border);
+  font-weight:700;
+  font-size:14px;
+}
+.btn-ghost.muted{ color: var(--muted); }
+
+/* ---------- stats ---------- */
+.stats-toggle{
+  background:transparent;
+  border:none;
+  color: var(--muted);
+  font-family:'Cairo';
+  font-weight:700;
+  font-size:13.5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:8px;
+  cursor:pointer;
+}
+.stats-toggle .chev{ transition: transform .25s ease; font-size:11px; }
+.stats-toggle.open .chev{ transform: rotate(180deg); }
+
+.stats-panel{
+  display:none;
+  background: var(--elev);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  flex-direction:column;
+  gap:14px;
+}
+.stats-panel.open{ display:flex; }
+
+.stats-summary{
+  display:flex;
+  justify-content:space-between;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.stats-summary .item{ text-align:center; flex:1; }
+.stats-summary .num{
+  font-family:'JetBrains Mono';
+  font-weight:700;
+  font-size:19px;
+  color: var(--green);
+}
+.stats-summary .lbl{
+  font-size:11px;
+  color: var(--muted);
+  margin-top:3px;
+}
+
+.bar-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12.5px;
+}
+.bar-row .n{
+  font-family:'JetBrains Mono';
+  color: var(--muted);
+  width:16px;
+  flex-shrink:0;
+}
+.bar-track{
+  flex:1;
+  height:9px;
+  background: var(--elev-2);
+  border-radius:5px;
+  overflow:hidden;
+}
+.bar-fill{
+  height:100%;
+  border-radius:5px;
+  background: linear-gradient(90deg, var(--green-strong), var(--green));
+  transition: width .5s ease;
+}
+.bar-fill.empty{ background: var(--border); }
+.bar-val{
+  font-family:'JetBrains Mono';
+  color: var(--ink);
+  width:44px;
+  text-align:end;
+  flex-shrink:0;
+  font-size:12px;
+}
+
+.reset-link{
+  align-self:center;
+  background:none;
+  border:none;
+  color: var(--muted-2);
+  font-family:'Cairo';
+  font-size:12px;
+  text-decoration: underline;
+  cursor:pointer;
+  padding:4px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <button class="about-btn" id="btnAbout" aria-label="حول التطبيق" data-i18n-aria="header.aboutAria">ⓘ</button>
+    <div class="eyebrow" id="eyebrowRoute">NİZİP ⇄ GAZİANTEP</div>
+    <div class="title title-brand">دربك</div>
+    <div class="subtitle" id="subtitleText"><span id="subtitlePrefix" data-i18n="subtitle.prefix">عدّاد الإشارات ·</span> <span id="signalCountLabel">١٠</span> <span id="subtitleSuffix" data-i18n="subtitle.suffix">إشارات ضوئية على الطريق</span></div>
+  </div>
+
+  <div class="route-tabs-scroll" id="routeTabsScroll">
+    <div class="route-tabs" id="routeTabs"></div>
+  </div>
+
+  <div class="dir-toggle">
+    <button class="dir-btn" data-dircode="A2B"></button>
+    <button class="dir-btn" data-dircode="B2A"></button>
+  </div>
+
+  <div class="route-card">
+    <div class="route-cities">
+      <span id="cityStart">نزيب</span>
+      <button class="city-edit-btn" id="btnEditCities" aria-label="تعديل اسم المدن" data-i18n-aria="route.editCitiesAria">✎</button>
+      <span id="cityEnd">عنتاب</span>
+    </div>
+    <div class="route-card-toolbar">
+      <button class="list-edit-toggle" id="listEditToggle" data-i18n="list.editToggle">✎ تعديل قائمة الإشارات</button>
+    </div>
+    <div class="signal-list" id="signalList"></div>
+    <button class="add-signal-btn" id="btnAddSignal" style="display:none;" data-i18n="list.addSignal">+ إضافة إشارة جديدة</button>
+  </div>
+
+  <div class="signal-card" id="signalCard">
+    <div class="signal-head">
+      <div class="signal-index"><span data-i18n="signal.label">الإشارة</span> <b id="signalNum">١</b> / <span id="signalTotal">١٠</span></div>
+      <button class="edit-name-btn" id="btnEditName" data-i18n="signal.rename">✎ تسمية</button>
+    </div>
+    <div class="signal-name" id="signalName"></div>
+    <input class="signal-name-input" id="signalNameInput" style="display:none;" maxlength="24" placeholder="مثال: مدخل الصناعة" data-i18n-placeholder="signal.namePlaceholder">
+    <div class="avg-row" id="avgRow" data-i18n="signal.noData">لا توجد بيانات مسجلة بعد</div>
+
+    <div class="phase-label" id="phaseLabel"></div>
+    <div class="timer idle" id="timer">
+      <span class="led"></span>
+      <span id="timerText">٠:٠٠</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-stop" id="btnPrimary" data-i18n="signal.btnStopped">توقفت (أحمر)</button>
+      <div class="row-2">
+        <button class="btn btn-ghost" id="btnNext" data-i18n="signal.btnNext">الإشارة التالية ←</button>
+        <button class="btn btn-ghost muted" id="btnReset" data-i18n="signal.btnResetTrip">إعادة الرحلة</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="stats-toggle" id="statsToggle">
+    <span data-i18n="stats.toggle">عرض إحصائيات الإشارات</span>
+    <span class="chev">▾</span>
+  </button>
+
+  <div class="stats-panel" id="statsPanel">
+    <div class="stats-summary">
+      <div class="item">
+        <div class="num" id="statAvgTrip">—</div>
+        <div class="lbl" data-i18n="stats.totalWait">إجمالي وقت الانتظار المتوقع</div>
+      </div>
+      <div class="item">
+        <div class="num" id="statCoverage">—</div>
+        <div class="lbl" data-i18n="stats.coverage">إشارات لديها بيانات</div>
+      </div>
+    </div>
+    <div id="barsWrap"></div>
+    <button class="reset-link" id="resetData" data-i18n="stats.resetDirection">مسح بيانات هذا الاتجاه</button>
+  </div>
+
+</div>
+
+<div class="about-overlay" id="aboutOverlay">
+  <div class="about-sheet">
+    <button class="about-close" id="btnAboutClose" aria-label="إغلاق" data-i18n-aria="common.close">✕</button>
+    <div class="about-icon">
+      <img src="icon-192.png" alt="أيقونة دربك" data-i18n-alt="about.iconAlt">
+    </div>
+    <div class="about-appname">دربك</div>
+    <div class="about-tagline" data-i18n="about.tagline">عدّاد إشارات الطريق الذكي</div>
+
+    <div class="about-block">
+      <div class="about-label" data-i18n="about.languageLabel">اللغة</div>
+      <div class="lang-switcher" id="langSwitcher">
+        <button class="lang-btn" data-lang="ar">العربية</button>
+        <button class="lang-btn" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="tr">Türkçe</button>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="about-label" data-i18n="about.developerLabel">المطوّر</div>
+      <div class="about-value" id="aboutDeveloperName">محمود أحمد بيضون</div>
+      <a class="about-email" href="mailto:mbeydun7@gmail.com">mbeydun7@gmail.com</a>
+    </div>
+
+    <div class="about-block">
+      <div class="about-label" data-i18n="about.aboutLabel">عن التطبيق</div>
+      <div class="about-value about-desc" id="aboutDesc" data-i18n="about.desc">
+        يساعدك دربك على تقدير الوقت المتبقي لكل إشارة ضوئية على خط سيرك،
+        اعتمادًا على متوسط الأزمنة التي سجّلتها بنفسك أثناء رحلاتك السابقة.
+      </div>
+    </div>
+
+    <div class="about-copyright" data-i18n="about.copyright">
+      جميع الحقوق محفوظة © دربك
+    </div>
+  </div>
+</div>
+
+<div class="about-overlay" id="routeEditorOverlay">
+  <div class="about-sheet route-editor-sheet">
+    <button class="about-close" id="btnRouteEditorClose" aria-label="إغلاق" data-i18n-aria="common.close">✕</button>
+    <div class="about-appname" id="routeEditorTitle">خط سير جديد</div>
+    <div class="about-tagline" data-i18n="route.editorTagline">اسم كل خط سير يُحفظ ببياناته كاملة، ويعود كما تركته عند اختياره لاحقًا</div>
+
+    <div class="route-editor-field">
+      <label data-i18n="route.fromLabel">من (نقطة الانطلاق)</label>
+      <input type="text" id="routeCityAInput" maxlength="20" placeholder="مثال: نزيب" data-i18n-placeholder="route.fromPlaceholder">
+    </div>
+    <div class="route-editor-field">
+      <label data-i18n="route.toLabel">إلى (الوجهة)</label>
+      <input type="text" id="routeCityBInput" maxlength="20" placeholder="مثال: عنتاب" data-i18n-placeholder="route.toPlaceholder">
+    </div>
+
+    <div class="route-editor-actions">
+      <button class="btn btn-green" id="btnRouteEditorSave" data-i18n="common.save">حفظ</button>
+      <button class="btn btn-ghost muted" id="btnRouteEditorDelete" style="display:none;" data-i18n="route.deleteThis">حذف خط السير هذا</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const N = 10;
+  const DEFAULT_ROUTE = { id: 'default', cityA: 'نزيب', cityB: 'عنتاب' };
+
+  const I18N = {
+    ar: {
+      'header.aboutAria': 'حول التطبيق',
+      'subtitle.prefix': 'عدّاد الإشارات ·',
+      'subtitle.suffix': 'إشارات ضوئية على الطريق',
+      'route.editCitiesAria': 'تعديل اسم المدن',
+      'route.newTab': '+ خط سير جديد',
+      'route.editorTitleEdit': 'تعديل خط السير',
+      'route.editorTitleNew': 'خط سير جديد',
+      'route.editorTagline': 'اسم كل خط سير يُحفظ ببياناته كاملة، ويعود كما تركته عند اختياره لاحقًا',
+      'route.fromLabel': 'من (نقطة الانطلاق)',
+      'route.toLabel': 'إلى (الوجهة)',
+      'route.fromPlaceholder': 'مثال: نزيب',
+      'route.toPlaceholder': 'مثال: عنتاب',
+      'route.deleteThis': 'حذف خط السير هذا',
+      'route.enterBothCities': 'الرجاء إدخال اسم المدينتين.',
+      'route.confirmDelete': 'حذف خط سير "{name}" وكل بياناته المسجلة؟',
+      'list.editToggle': '✎ تعديل قائمة الإشارات',
+      'list.editToggleDone': '✓ تم',
+      'list.addSignal': '+ إضافة إشارة جديدة',
+      'list.namePlaceholder': 'مثال: مدخل الصناعة',
+      'list.unnamed': 'بدون اسم',
+      'list.finishFirst': 'أنهِ تسجيل الإشارة الحالية أولًا قبل تعديل القائمة.',
+      'list.confirmDeleteNamed': 'حذف الإشارة "{name}" وكل بياناتها المسجلة؟',
+      'list.confirmDeleteNumbered': 'حذف الإشارة رقم {n} وكل بياناتها المسجلة؟',
+      'signal.label': 'الإشارة',
+      'signal.rename': '✎ تسمية',
+      'signal.namePlaceholder': 'مثال: مدخل الصناعة',
+      'signal.noData': 'لا توجد بيانات مسجلة بعد',
+      'signal.waitLabel': '🔴 انتظار',
+      'signal.greenLabel': '🟢 مدة الأخضر',
+      'signal.firstRecordRed': '🔴 قيد العد — أول تسجيل لهذه الإشارة',
+      'signal.remainingToGreen': '🔴 متبقٍ تقريبًا حتى الأخضر',
+      'signal.firstRecordGreen': '🟢 قيد العد — أول تسجيل لهذه الإشارة',
+      'signal.remainingToRed': '🟢 متبقٍ تقريبًا حتى الأحمر',
+      'signal.btnStopped': 'توقفت (أحمر)',
+      'signal.btnTurnedGreen': 'تحوّلت خضراء ✓',
+      'signal.btnBackToRed': 'رجعت حمراء',
+      'signal.btnNext': 'الإشارة التالية ←',
+      'signal.btnResetTrip': 'إعادة الرحلة',
+      'stats.toggle': 'عرض إحصائيات الإشارات',
+      'stats.totalWait': 'إجمالي وقت الانتظار المتوقع',
+      'stats.coverage': 'إشارات لديها بيانات',
+      'stats.resetDirection': 'مسح بيانات هذا الاتجاه',
+      'stats.confirmReset': 'سيتم حذف كل البيانات المسجلة لهذا الاتجاه. متابعة؟',
+      'common.close': 'إغلاق',
+      'common.save': 'حفظ',
+      'about.iconAlt': 'أيقونة دربك',
+      'about.tagline': 'عدّاد إشارات الطريق الذكي',
+      'about.languageLabel': 'اللغة',
+      'about.developerLabel': 'المطوّر',
+      'about.developerName': 'محمود أحمد بيضون',
+      'about.aboutLabel': 'عن التطبيق',
+      'about.desc': 'يساعدك دربك على تقدير الوقت المتبقي لكل إشارة ضوئية على خط سيرك، اعتمادًا على متوسط الأزمنة التي سجّلتها بنفسك أثناء رحلاتك السابقة.',
+      'about.copyright': 'جميع الحقوق محفوظة © دربك',
+    },
+    en: {
+      'header.aboutAria': 'About the app',
+      'subtitle.prefix': 'Signal Timer ·',
+      'subtitle.suffix': 'traffic lights on the route',
+      'route.editCitiesAria': 'Edit city names',
+      'route.newTab': '+ New route',
+      'route.editorTitleEdit': 'Edit route',
+      'route.editorTitleNew': 'New route',
+      'route.editorTagline': 'Each route is saved with all its data, and returns exactly as you left it when selected again.',
+      'route.fromLabel': 'From (starting point)',
+      'route.toLabel': 'To (destination)',
+      'route.fromPlaceholder': 'e.g. Nizip',
+      'route.toPlaceholder': 'e.g. Gaziantep',
+      'route.deleteThis': 'Delete this route',
+      'route.enterBothCities': 'Please enter both city names.',
+      'route.confirmDelete': 'Delete route "{name}" and all its recorded data?',
+      'list.editToggle': '✎ Edit signal list',
+      'list.editToggleDone': '✓ Done',
+      'list.addSignal': '+ Add new signal',
+      'list.namePlaceholder': 'e.g. Industrial entrance',
+      'list.unnamed': 'Unnamed',
+      'list.finishFirst': 'Finish recording the current signal before editing the list.',
+      'list.confirmDeleteNamed': 'Delete signal "{name}" and all its recorded data?',
+      'list.confirmDeleteNumbered': 'Delete signal #{n} and all its recorded data?',
+      'signal.label': 'Signal',
+      'signal.rename': '✎ Rename',
+      'signal.namePlaceholder': 'e.g. Industrial entrance',
+      'signal.noData': 'No data recorded yet',
+      'signal.waitLabel': '🔴 Wait',
+      'signal.greenLabel': '🟢 Green time',
+      'signal.firstRecordRed': '🔴 Timing — first record for this signal',
+      'signal.remainingToGreen': '🔴 Approx. remaining until green',
+      'signal.firstRecordGreen': '🟢 Timing — first record for this signal',
+      'signal.remainingToRed': '🟢 Approx. remaining until red',
+      'signal.btnStopped': 'Stopped (Red)',
+      'signal.btnTurnedGreen': 'Turned green ✓',
+      'signal.btnBackToRed': 'Back to red',
+      'signal.btnNext': 'Next signal →',
+      'signal.btnResetTrip': 'Reset trip',
+      'stats.toggle': 'Show signal statistics',
+      'stats.totalWait': 'Total expected wait time',
+      'stats.coverage': 'Signals with data',
+      'stats.resetDirection': "Clear this direction's data",
+      'stats.confirmReset': 'All recorded data for this direction will be deleted. Continue?',
+      'common.close': 'Close',
+      'common.save': 'Save',
+      'about.iconAlt': 'Darbak icon',
+      'about.tagline': 'Smart traffic signal timer',
+      'about.languageLabel': 'Language',
+      'about.developerLabel': 'Developer',
+      'about.developerName': 'MAHMUD BEYDUN',
+      'about.aboutLabel': 'About the app',
+      'about.desc': "Darbak helps you estimate the remaining time for each traffic light on your route, based on the average durations you've recorded from your previous trips.",
+      'about.copyright': 'All rights reserved © Darbak',
+    },
+    tr: {
+      'header.aboutAria': 'Uygulama hakkında',
+      'subtitle.prefix': 'Sinyal Sayacı · Yolda',
+      'subtitle.suffix': 'trafik ışığı',
+      'route.editCitiesAria': 'Şehir adlarını düzenle',
+      'route.newTab': '+ Yeni güzergah',
+      'route.editorTitleEdit': 'Güzergahı düzenle',
+      'route.editorTitleNew': 'Yeni güzergah',
+      'route.editorTagline': 'Her güzergah tüm verileriyle birlikte kaydedilir ve tekrar seçildiğinde tam olarak bıraktığınız gibi görünür.',
+      'route.fromLabel': 'Nereden (başlangıç noktası)',
+      'route.toLabel': 'Nereye (varış noktası)',
+      'route.fromPlaceholder': 'örn. Nizip',
+      'route.toPlaceholder': 'örn. Gaziantep',
+      'route.deleteThis': 'Bu güzergahı sil',
+      'route.enterBothCities': 'Lütfen her iki şehir adını da girin.',
+      'route.confirmDelete': '"{name}" güzergahını ve tüm kayıtlı verilerini sil?',
+      'list.editToggle': '✎ Sinyal listesini düzenle',
+      'list.editToggleDone': '✓ Bitti',
+      'list.addSignal': '+ Yeni sinyal ekle',
+      'list.namePlaceholder': 'örn. Sanayi girişi',
+      'list.unnamed': 'İsimsiz',
+      'list.finishFirst': 'Listeyi düzenlemeden önce mevcut sinyal kaydını bitirin.',
+      'list.confirmDeleteNamed': '"{name}" sinyalini ve tüm kayıtlı verilerini sil?',
+      'list.confirmDeleteNumbered': '{n} numaralı sinyali ve tüm kayıtlı verilerini sil?',
+      'signal.label': 'Sinyal',
+      'signal.rename': '✎ Adlandır',
+      'signal.namePlaceholder': 'örn. Sanayi girişi',
+      'signal.noData': 'Henüz veri kaydedilmedi',
+      'signal.waitLabel': '🔴 Bekleme',
+      'signal.greenLabel': '🟢 Yeşil süresi',
+      'signal.firstRecordRed': '🔴 Sayılıyor — bu sinyal için ilk kayıt',
+      'signal.remainingToGreen': '🔴 Yeşile kadar yaklaşık kalan süre',
+      'signal.firstRecordGreen': '🟢 Sayılıyor — bu sinyal için ilk kayıt',
+      'signal.remainingToRed': '🟢 Kırmızıya kadar yaklaşık kalan süre',
+      'signal.btnStopped': 'Durdum (Kırmızı)',
+      'signal.btnTurnedGreen': 'Yeşile döndü ✓',
+      'signal.btnBackToRed': 'Kırmızıya döndü',
+      'signal.btnNext': 'Sonraki sinyal →',
+      'signal.btnResetTrip': 'Yolculuğu sıfırla',
+      'stats.toggle': 'Sinyal istatistiklerini göster',
+      'stats.totalWait': 'Toplam tahmini bekleme süresi',
+      'stats.coverage': 'Verisi olan sinyaller',
+      'stats.resetDirection': 'Bu yönün verilerini temizle',
+      'stats.confirmReset': 'Bu yöne ait tüm kayıtlı veriler silinecek. Devam edilsin mi?',
+      'common.close': 'Kapat',
+      'common.save': 'Kaydet',
+      'about.iconAlt': 'Darbak simgesi',
+      'about.tagline': 'Akıllı trafik ışığı sayacı',
+      'about.languageLabel': 'Dil',
+      'about.developerLabel': 'Geliştirici',
+      'about.developerName': 'MAHMUD BEYDUN',
+      'about.aboutLabel': 'Uygulama hakkında',
+      'about.desc': 'Darbak, önceki yolculuklarınızda kaydettiğiniz ortalama sürelere dayanarak, güzergahınızdaki her trafik ışığında kalan süreyi tahmin etmenize yardımcı olur.',
+      'about.copyright': 'Tüm hakları saklıdır © Darbak',
+    },
+  };
+
+  function t(key, vars){
+    let str = (I18N[state.lang] && I18N[state.lang][key]) || I18N.ar[key] || key;
+    if(vars){
+      Object.keys(vars).forEach(k => { str = str.replace('{' + k + '}', vars[k]); });
+    }
+    return str;
+  }
+
+  let state = {
+    lang: 'ar',
+    routes: [DEFAULT_ROUTE],
+    routeId: 'default',
+    dirCode: 'A2B',         // 'A2B' (cityA -> cityB) | 'B2A' (cityB -> cityA)
+    currentIndex: 0,       // 0..N-1
+    phase: 'idle',         // 'idle' | 'red' | 'green'
+    startTs: null,
+    tickHandle: null,
+    data: null,            // array of {red:[seconds,...], green:[seconds,...], name} — length can vary
+    listEditMode: false
+  };
+
+  const el = {
+    dirBtns: document.querySelectorAll('.dir-btn'),
+    cityStart: document.getElementById('cityStart'),
+    cityEnd: document.getElementById('cityEnd'),
+    signalList: document.getElementById('signalList'),
+    signalCard: document.getElementById('signalCard'),
+    signalNum: document.getElementById('signalNum'),
+    signalName: document.getElementById('signalName'),
+    btnEditName: document.getElementById('btnEditName'),
+    signalNameInput: document.getElementById('signalNameInput'),
+    avgRow: document.getElementById('avgRow'),
+    phaseLabel: document.getElementById('phaseLabel'),
+    timer: document.getElementById('timer'),
+    timerText: document.getElementById('timerText'),
+    btnPrimary: document.getElementById('btnPrimary'),
+    btnNext: document.getElementById('btnNext'),
+    btnReset: document.getElementById('btnReset'),
+    statsToggle: document.getElementById('statsToggle'),
+    statsPanel: document.getElementById('statsPanel'),
+    statAvgTrip: document.getElementById('statAvgTrip'),
+    statCoverage: document.getElementById('statCoverage'),
+    barsWrap: document.getElementById('barsWrap'),
+    resetData: document.getElementById('resetData'),
+    btnAbout: document.getElementById('btnAbout'),
+    aboutOverlay: document.getElementById('aboutOverlay'),
+    btnAboutClose: document.getElementById('btnAboutClose'),
+    signalCountLabel: document.getElementById('signalCountLabel'),
+    signalTotal: document.getElementById('signalTotal'),
+    listEditToggle: document.getElementById('listEditToggle'),
+    btnAddSignal: document.getElementById('btnAddSignal'),
+    eyebrowRoute: document.getElementById('eyebrowRoute'),
+    routeTabs: document.getElementById('routeTabs'),
+    routeEditorOverlay: document.getElementById('routeEditorOverlay'),
+    routeEditorTitle: document.getElementById('routeEditorTitle'),
+    btnRouteEditorClose: document.getElementById('btnRouteEditorClose'),
+    routeCityAInput: document.getElementById('routeCityAInput'),
+    routeCityBInput: document.getElementById('routeCityBInput'),
+    btnRouteEditorSave: document.getElementById('btnRouteEditorSave'),
+    btnRouteEditorDelete: document.getElementById('btnRouteEditorDelete'),
+    btnEditCities: document.getElementById('btnEditCities'),
+    subtitleText: document.getElementById('subtitleText'),
+    langSwitcher: document.getElementById('langSwitcher'),
+    aboutDeveloperName: document.getElementById('aboutDeveloperName'),
+  };
+
+  const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  function localizeDigits(n){
+    const str = String(n);
+    if(state.lang !== 'ar') return str;
+    return str.split('').map(c => /[0-9]/.test(c) ? arabicDigits[c] : c).join('');
+  }
+
+  function fmtTime(totalSeconds){
+    const s = Math.max(0, Math.floor(totalSeconds));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m + ':' + String(r).padStart(2,'0');
+  }
+
+  function defaultData(){
+    return Array.from({length: N}, () => ({ red: [], green: [], name: '' }));
+  }
+
+  function totalSignals(){
+    return state.data ? state.data.length : 0;
+  }
+
+  // Accepts old-format items {samples:[...]} and new-format {red:[...],green:[...],name}
+  function migrateItem(item){
+    if(item && Array.isArray(item.red) && Array.isArray(item.green)){
+      return { red: item.red, green: item.green, name: typeof item.name === 'string' ? item.name : '' };
+    }
+    if(item && Array.isArray(item.samples)) return { red: item.samples, green: [], name: '' };
+    return { red: [], green: [], name: '' };
+  }
+
+  async function loadDirection(dir){
+    try{
+      const res = await window.storage.get('route-signals:' + dir);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(Array.isArray(parsed) && parsed.length >= 1) return parsed.map(migrateItem);
+      }
+    }catch(e){ /* key not found or error -> fall through to default */ }
+    return defaultData();
+  }
+
+  async function saveDirection(dir, data){
+    const payload = JSON.stringify(data);
+    for(let attempt = 0; attempt < 2; attempt++){
+      try{
+        await window.storage.set('route-signals:' + dir, payload);
+        return true;
+      }catch(e){
+        console.error('تعذّر حفظ البيانات (محاولة ' + (attempt+1) + ')', e);
+      }
+    }
+    return false;
+  }
+
+  // ---------- routes (saved city pairs, each with its own persisted signals) ----------
+  async function loadRoutes(){
+    try{
+      const res = await window.storage.get('routes:index');
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(Array.isArray(parsed) && parsed.length && parsed.every(r => r && r.id && r.cityA && r.cityB)){
+          return parsed;
+        }
+      }
+    }catch(e){ /* not found -> default */ }
+    return [DEFAULT_ROUTE];
+  }
+
+  async function saveRoutes(routes){
+    try{ await window.storage.set('routes:index', JSON.stringify(routes)); }
+    catch(e){ console.error('تعذّر حفظ قائمة خطوط السير', e); }
+  }
+
+  async function loadActiveRouteId(routes){
+    try{
+      const res = await window.storage.get('routes:active');
+      if(res && res.value && routes.some(r => r.id === res.value)) return res.value;
+    }catch(e){ /* not found -> first route */ }
+    return routes[0].id;
+  }
+
+  async function saveActiveRouteId(id){
+    try{ await window.storage.set('routes:active', id); }
+    catch(e){ console.error('تعذّر حفظ خط السير النشط', e); }
+  }
+
+  function currentRoute(){
+    return state.routes.find(r => r.id === state.routeId) || state.routes[0];
+  }
+
+  // The default route keeps using its original storage keys (nizip-antep / antep-nizip)
+  // so existing data for people already using the app is never lost or migrated.
+  function storageKeyFor(dirCode){
+    const route = currentRoute();
+    if(route.id === 'default'){
+      return dirCode === 'A2B' ? 'nizip-antep' : 'antep-nizip';
+    }
+    return route.id + ':' + dirCode;
+  }
+
+  function makeRouteId(){
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function avgOf(samples){
+    if(!samples || samples.length === 0) return null;
+    const sum = samples.reduce((a,b) => a+b, 0);
+    return sum / samples.length;
+  }
+
+  function stopTicking(){
+    if(state.tickHandle){ clearInterval(state.tickHandle); state.tickHandle = null; }
+  }
+
+  function applyStaticI18n(){
+    document.documentElement.lang = state.lang;
+    document.documentElement.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
+
+    document.querySelectorAll('[data-i18n]').forEach(elx => {
+      elx.textContent = t(elx.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(elx => {
+      elx.setAttribute('aria-label', t(elx.dataset.i18nAria));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(elx => {
+      elx.setAttribute('placeholder', t(elx.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach(elx => {
+      elx.setAttribute('alt', t(elx.dataset.i18nAlt));
+    });
+
+    el.aboutDeveloperName.textContent = t('about.developerName');
+
+    el.langSwitcher.querySelectorAll('.lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === state.lang);
+    });
+
+    document.title = 'دربك · ' + t('subtitle.prefix') + ' ' + t('subtitle.suffix');
+  }
+
+  async function setLanguage(lang){
+    if(!I18N[lang]) return;
+    state.lang = lang;
+    try{ await window.storage.set('app:lang', lang); }catch(e){ /* ignore */ }
+    applyStaticI18n();
+    renderAll();
+    renderRouteTabs();
+  }
+
+  function renderDirButtons(){
+    const route = currentRoute();
+    const arrow = state.lang === 'ar' ? ' ← ' : ' → ';
+    el.dirBtns.forEach(b => {
+      const code = b.dataset.dircode;
+      b.textContent = code === 'A2B'
+        ? (route.cityA + arrow + route.cityB)
+        : (route.cityB + arrow + route.cityA);
+      b.classList.toggle('active', code === state.dirCode);
+    });
+    el.cityStart.textContent = state.dirCode === 'A2B' ? route.cityA : route.cityB;
+    el.cityEnd.textContent = state.dirCode === 'A2B' ? route.cityB : route.cityA;
+    el.eyebrowRoute.textContent = route.cityA + ' ⇄ ' + route.cityB;
+  }
+
+  function renderRouteTabs(){
+    el.routeTabs.innerHTML = '';
+    state.routes.forEach(route => {
+      const tab = document.createElement('div');
+      tab.className = 'route-tab' + (route.id === state.routeId ? ' active' : '');
+
+      const label = document.createElement('span');
+      label.className = 'route-tab-label';
+      label.textContent = route.cityA + ' ⇄ ' + route.cityB;
+      label.addEventListener('click', () => {
+        if(route.id !== state.routeId) switchRoute(route.id);
+      });
+      tab.appendChild(label);
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'route-tab-edit';
+      editBtn.textContent = '✎';
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRouteEditor(route.id);
+      });
+      tab.appendChild(editBtn);
+
+      el.routeTabs.appendChild(tab);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'route-tab-add';
+    addBtn.textContent = t('route.newTab');
+    addBtn.addEventListener('click', () => openRouteEditor(null));
+    el.routeTabs.appendChild(addBtn);
+  }
+
+  function renderRouteStrip(){
+    el.signalList.innerHTML = '';
+    const total = totalSignals();
+    for(let i=0;i<total;i++){
+      const item = state.data[i];
+      const redAvg = avgOf(item.red);
+      const greenAvg = avgOf(item.green);
+
+      const row = document.createElement('div');
+      row.className = 'signal-row';
+      if(state.listEditMode) row.classList.add('edit-mode');
+      if(i === state.currentIndex && !state.listEditMode) row.classList.add('current');
+      else if(redAvg !== null) row.classList.add(redAvg >= 60 ? 'slow' : 'has-data');
+
+      const badge = document.createElement('div');
+      badge.className = 'signal-row-badge';
+      badge.textContent = localizeDigits(i + 1);
+      row.appendChild(badge);
+
+      if(state.listEditMode){
+        const nameInput = document.createElement('input');
+        nameInput.className = 'signal-row-name-input';
+        nameInput.maxLength = 24;
+        nameInput.placeholder = t('list.namePlaceholder');
+        nameInput.value = item.name || '';
+        nameInput.addEventListener('change', async () => {
+          state.data[i].name = nameInput.value.trim().slice(0, 24);
+          await saveDirection(storageKeyFor(state.dirCode), state.data);
+          renderSignalCard();
+          renderStats();
+        });
+        row.appendChild(nameInput);
+
+        const actions = document.createElement('div');
+        actions.className = 'signal-row-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'row-action-btn';
+        upBtn.textContent = '▲';
+        upBtn.disabled = (i === 0);
+        upBtn.addEventListener('click', () => moveSignal(i, -1));
+        actions.appendChild(upBtn);
+
+        const downBtn = document.createElement('button');
+        downBtn.className = 'row-action-btn';
+        downBtn.textContent = '▼';
+        downBtn.disabled = (i === total - 1);
+        downBtn.addEventListener('click', () => moveSignal(i, 1));
+        actions.appendChild(downBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'row-action-btn danger';
+        delBtn.textContent = '🗑';
+        delBtn.disabled = (total <= 1);
+        delBtn.addEventListener('click', () => deleteSignal(i));
+        actions.appendChild(delBtn);
+
+        row.appendChild(actions);
+      } else {
+        const name = document.createElement('div');
+        name.className = 'signal-row-name' + (item.name ? '' : ' unnamed');
+        name.textContent = item.name || t('list.unnamed');
+        row.appendChild(name);
+
+        const stats = document.createElement('div');
+        stats.className = 'signal-row-stats';
+        let statsHtml = '';
+        statsHtml += '<span class="s-red">🔴 ' + (redAvg !== null ? fmtTime(redAvg) : '—') + '</span>';
+        statsHtml += '<span class="s-green">🟢 ' + (greenAvg !== null ? fmtTime(greenAvg) : '—') + '</span>';
+        stats.innerHTML = statsHtml;
+        row.appendChild(stats);
+
+        row.addEventListener('click', () => jumpTo(i));
+      }
+
+      el.signalList.appendChild(row);
+    }
+
+    el.signalCountLabel.textContent = localizeDigits(total);
+    el.signalTotal.textContent = localizeDigits(total);
+    el.btnAddSignal.style.display = state.listEditMode ? 'block' : 'none';
+  }
+
+  function renderSignalCard(){
+    el.signalNum.textContent = localizeDigits(state.currentIndex + 1);
+    const sig = state.data ? state.data[state.currentIndex] : { red: [], green: [], name: '' };
+    const redAvg = avgOf(sig.red);
+    const greenAvg = avgOf(sig.green);
+
+    el.signalNameInput.style.display = 'none';
+    if(sig.name){
+      el.signalName.textContent = sig.name;
+      el.signalName.style.display = 'block';
+    } else {
+      el.signalName.textContent = '';
+      el.signalName.style.display = 'none';
+    }
+
+    if(redAvg === null && greenAvg === null){
+      el.avgRow.innerHTML = t('signal.noData');
+    } else {
+      const parts = [];
+      if(redAvg !== null) parts.push(t('signal.waitLabel') + ': <b>' + fmtTime(redAvg) + '</b> (' + localizeDigits(sig.red.length) + ')');
+      if(greenAvg !== null) parts.push(t('signal.greenLabel') + ': <b>' + fmtTime(greenAvg) + '</b> (' + localizeDigits(sig.green.length) + ')');
+      el.avgRow.innerHTML = parts.join(' · ');
+    }
+
+    el.signalCard.classList.remove('state-red','state-green');
+    el.timer.classList.remove('phase-green');
+    el.phaseLabel.classList.remove('green');
+
+    if(state.phase === 'red'){
+      el.signalCard.classList.add('state-red');
+      el.timer.classList.remove('idle');
+      el.timer.classList.add('running');
+      el.phaseLabel.textContent = redAvg !== null ? t('signal.remainingToGreen') : t('signal.firstRecordRed');
+      el.btnPrimary.textContent = t('signal.btnTurnedGreen');
+      el.btnPrimary.className = 'btn btn-green';
+    } else if(state.phase === 'green'){
+      el.signalCard.classList.add('state-green');
+      el.timer.classList.remove('idle');
+      el.timer.classList.add('running','phase-green');
+      el.phaseLabel.classList.add('green');
+      el.phaseLabel.textContent = greenAvg !== null ? t('signal.remainingToRed') : t('signal.firstRecordGreen');
+      el.btnPrimary.textContent = t('signal.btnBackToRed');
+      el.btnPrimary.className = 'btn btn-stop';
+    } else {
+      el.timer.classList.remove('running','overtime');
+      el.timer.classList.add('idle');
+      el.phaseLabel.textContent = '';
+      el.timerText.textContent = localizeDigits('0:00');
+      el.btnPrimary.textContent = t('signal.btnStopped');
+      el.btnPrimary.className = 'btn btn-stop';
+    }
+  }
+
+  function renderStats(){
+    if(!state.data) return;
+    const avgs = state.data.map(s => avgOf(s.red));
+    const withData = avgs.filter(a => a !== null);
+    const totalAvg = withData.length ? withData.reduce((a,b)=>a+b,0) : null;
+    el.statAvgTrip.textContent = totalAvg !== null ? fmtTime(totalAvg) : '—';
+    el.statCoverage.textContent = localizeDigits(withData.length) + ' / ' + localizeDigits(totalSignals());
+
+    const maxAvg = withData.length ? Math.max(...withData) : 1;
+    el.barsWrap.innerHTML = '';
+    state.data.forEach((sig, i) => {
+      const avg = avgOf(sig.red);
+      const gAvg = avgOf(sig.green);
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      const pct = avg !== null ? Math.max(6, Math.round((avg / maxAvg) * 100)) : 0;
+      row.innerHTML =
+        '<span class="n"' + (sig.name ? ' title="' + sig.name.replace(/"/g,'') + '"' : '') + '>' + localizeDigits(i+1) + '</span>' +
+        '<div class="bar-track"><div class="bar-fill ' + (avg===null?'empty':'') + '" style="width:' + (avg===null?4:pct) + '%"></div></div>' +
+        '<span class="bar-val">' + (avg===null ? '—' : fmtTime(avg)) + (gAvg!==null ? ' 🟢' + fmtTime(gAvg) : '') + '</span>';
+      el.barsWrap.appendChild(row);
+    });
+  }
+
+  function renderAll(){
+    renderDirButtons();
+    renderRouteStrip();
+    renderSignalCard();
+    renderStats();
+  }
+
+  async function switchDirection(dirCode){
+    stopTicking();
+    state.dirCode = dirCode;
+    state.currentIndex = 0;
+    state.phase = 'idle';
+    state.startTs = null;
+    state.listEditMode = false;
+    el.listEditToggle.classList.remove('active');
+    el.listEditToggle.textContent = t('list.editToggle');
+    el.signalCard.style.opacity = '0.5';
+    state.data = await loadDirection(storageKeyFor(dirCode));
+    el.signalCard.style.opacity = '1';
+    renderAll();
+  }
+
+  async function switchRoute(routeId){
+    state.routeId = routeId;
+    renderRouteTabs();
+    await saveActiveRouteId(routeId);
+    await switchDirection('A2B');
+  }
+
+  function jumpTo(i){
+    if(state.phase !== 'idle') return; // avoid losing an in-progress reading
+    state.currentIndex = i;
+    renderRouteStrip();
+    renderSignalCard();
+  }
+
+  function currentPhaseAvg(){
+    if(state.phase === 'idle') return null;
+    const sig = state.data[state.currentIndex];
+    return avgOf(state.phase === 'red' ? sig.red : sig.green);
+  }
+
+  function updateTimerDisplay(){
+    if(state.phase === 'idle') return;
+    const elapsed = (Date.now() - state.startTs) / 1000;
+    const avg = currentPhaseAvg();
+    if(avg === null){
+      // no history yet for this phase: just count up
+      el.timer.classList.remove('overtime');
+      el.timerText.textContent = localizeDigits(fmtTime(elapsed));
+    } else {
+      const remaining = avg - elapsed;
+      if(remaining >= 0){
+        el.timer.classList.remove('overtime');
+        el.timerText.textContent = localizeDigits(fmtTime(remaining));
+      } else {
+        el.timer.classList.add('overtime');
+        el.timerText.textContent = '+' + localizeDigits(fmtTime(-remaining));
+      }
+    }
+  }
+
+  function runTicker(){
+    updateTimerDisplay();
+    state.tickHandle = setInterval(updateTimerDisplay, 200);
+  }
+
+  function startRed(){
+    state.phase = 'red';
+    state.startTs = Date.now();
+    renderSignalCard();
+    runTicker();
+  }
+
+  async function togglePhase(){
+    if(state.phase === 'idle'){
+      startRed();
+      return;
+    }
+    const elapsed = (Date.now() - state.startTs) / 1000;
+    stopTicking();
+
+    const sig = state.data[state.currentIndex];
+    if(state.phase === 'red'){
+      sig.red.push(Math.round(elapsed));
+      if(sig.red.length > 20) sig.red.shift();
+      state.phase = 'green';
+    } else if(state.phase === 'green'){
+      sig.green.push(Math.round(elapsed));
+      if(sig.green.length > 20) sig.green.shift();
+      state.phase = 'red';
+    }
+    state.startTs = Date.now();
+
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+    renderAll();
+    runTicker();
+  }
+
+  function nextSignal(){
+    stopTicking();
+    state.phase = 'idle';
+    state.currentIndex = (state.currentIndex + 1) % totalSignals();
+    renderAll();
+  }
+
+  function resetTrip(){
+    stopTicking();
+    state.phase = 'idle';
+    state.currentIndex = 0;
+    renderAll();
+  }
+
+  async function clearDirectionData(){
+    state.data = defaultData();
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+    renderAll();
+  }
+
+  function toggleListEditMode(){
+    if(state.phase !== 'idle'){
+      alert(t('list.finishFirst'));
+      return;
+    }
+    state.listEditMode = !state.listEditMode;
+    el.listEditToggle.classList.toggle('active', state.listEditMode);
+    el.listEditToggle.textContent = state.listEditMode ? t('list.editToggleDone') : t('list.editToggle');
+    renderRouteStrip();
+  }
+
+  async function addSignal(){
+    state.data.push({ red: [], green: [], name: '' });
+    const newIndex = state.data.length - 1;
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+    renderRouteStrip();
+    renderStats();
+    // focus the new row's name field for quick naming
+    const rows = el.signalList.children;
+    const lastRow = rows[rows.length - 1];
+    const input = lastRow && lastRow.querySelector('.signal-row-name-input');
+    if(input) input.focus();
+  }
+
+  async function deleteSignal(i){
+    const total = totalSignals();
+    if(total <= 1) return;
+    const item = state.data[i];
+    const msg = item.name
+      ? t('list.confirmDeleteNamed', { name: item.name })
+      : t('list.confirmDeleteNumbered', { n: localizeDigits(i + 1) });
+    if(!confirm(msg)) return;
+
+    state.data.splice(i, 1);
+    if(state.currentIndex >= state.data.length) state.currentIndex = state.data.length - 1;
+    else if(state.currentIndex > i) state.currentIndex -= 1;
+    state.phase = 'idle';
+    stopTicking();
+
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+    renderAll();
+  }
+
+  async function moveSignal(i, delta){
+    const j = i + delta;
+    if(j < 0 || j >= state.data.length) return;
+    const tmp = state.data[i];
+    state.data[i] = state.data[j];
+    state.data[j] = tmp;
+
+    if(state.currentIndex === i) state.currentIndex = j;
+    else if(state.currentIndex === j) state.currentIndex = i;
+
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+    renderRouteStrip();
+  }
+
+  function startEditName(){
+    const sig = state.data[state.currentIndex];
+    el.signalName.style.display = 'none';
+    el.signalNameInput.value = sig.name || '';
+    el.signalNameInput.style.display = 'block';
+    el.signalNameInput.focus();
+    el.signalNameInput.select();
+  }
+
+  async function commitEditName(){
+    if(el.signalNameInput.style.display === 'none') return;
+    const value = el.signalNameInput.value.trim().slice(0, 24);
+    state.data[state.currentIndex].name = value;
+    el.signalNameInput.style.display = 'none';
+    renderSignalCard();
+    renderRouteStrip();
+    renderStats();
+    await saveDirection(storageKeyFor(state.dirCode), state.data);
+  }
+
+  function cancelEditName(){
+    el.signalNameInput.style.display = 'none';
+    renderSignalCard();
+  }
+
+  // ---------- route editor overlay ----------
+  let editingRouteId = null; // null => creating a new route
+
+  function openRouteEditor(routeId){
+    editingRouteId = routeId;
+    if(routeId){
+      const route = state.routes.find(r => r.id === routeId);
+      el.routeEditorTitle.textContent = t('route.editorTitleEdit');
+      el.routeCityAInput.value = route.cityA;
+      el.routeCityBInput.value = route.cityB;
+      el.btnRouteEditorDelete.style.display = state.routes.length > 1 ? 'block' : 'none';
+    } else {
+      el.routeEditorTitle.textContent = t('route.editorTitleNew');
+      el.routeCityAInput.value = '';
+      el.routeCityBInput.value = '';
+      el.btnRouteEditorDelete.style.display = 'none';
+    }
+    el.routeEditorOverlay.classList.add('open');
+    setTimeout(() => el.routeCityAInput.focus(), 150);
+  }
+
+  function closeRouteEditor(){
+    el.routeEditorOverlay.classList.remove('open');
+    editingRouteId = null;
+  }
+
+  async function saveRouteEditor(){
+    const cityA = el.routeCityAInput.value.trim().slice(0, 20);
+    const cityB = el.routeCityBInput.value.trim().slice(0, 20);
+    if(!cityA || !cityB){
+      alert(t('route.enterBothCities'));
+      return;
+    }
+
+    if(editingRouteId){
+      const route = state.routes.find(r => r.id === editingRouteId);
+      route.cityA = cityA;
+      route.cityB = cityB;
+      await saveRoutes(state.routes);
+      renderRouteTabs();
+      if(route.id === state.routeId) renderDirButtons();
+      closeRouteEditor();
+    } else {
+      const newRoute = { id: makeRouteId(), cityA, cityB };
+      state.routes.push(newRoute);
+      await saveRoutes(state.routes);
+      closeRouteEditor();
+      await switchRoute(newRoute.id);
+    }
+  }
+
+  async function deleteRouteFromEditor(){
+    if(!editingRouteId || state.routes.length <= 1) return;
+    const route = state.routes.find(r => r.id === editingRouteId);
+    if(!confirm(t('route.confirmDelete', { name: route.cityA + ' ⇄ ' + route.cityB }))) return;
+
+    // best-effort cleanup of stored signal data for both directions of this route
+    for(const code of ['A2B','B2A']){
+      const key = route.id === 'default' ? (code === 'A2B' ? 'nizip-antep' : 'antep-nizip') : (route.id + ':' + code);
+      try{ await window.storage.delete('route-signals:' + key); }catch(e){ /* ignore */ }
+    }
+
+    state.routes = state.routes.filter(r => r.id !== editingRouteId);
+    await saveRoutes(state.routes);
+    closeRouteEditor();
+
+    if(state.routeId === route.id){
+      await switchRoute(state.routes[0].id);
+    } else {
+      renderRouteTabs();
+    }
+  }
+
+  // events
+  el.dirBtns.forEach(b => b.addEventListener('click', () => switchDirection(b.dataset.dircode)));
+  el.btnPrimary.addEventListener('click', togglePhase);
+  el.btnNext.addEventListener('click', nextSignal);
+  el.btnReset.addEventListener('click', resetTrip);
+  el.btnEditName.addEventListener('click', startEditName);
+  el.signalNameInput.addEventListener('blur', commitEditName);
+  el.signalNameInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') el.signalNameInput.blur();
+    if(e.key === 'Escape') cancelEditName();
+  });
+  el.statsToggle.addEventListener('click', () => {
+    el.statsPanel.classList.toggle('open');
+    el.statsToggle.classList.toggle('open');
+  });
+  el.resetData.addEventListener('click', () => {
+    if(confirm(t('stats.confirmReset'))) clearDirectionData();
+  });
+  el.btnAbout.addEventListener('click', () => el.aboutOverlay.classList.add('open'));
+  el.btnAboutClose.addEventListener('click', () => el.aboutOverlay.classList.remove('open'));
+  el.aboutOverlay.addEventListener('click', (e) => {
+    if(e.target === el.aboutOverlay) el.aboutOverlay.classList.remove('open');
+  });
+  el.listEditToggle.addEventListener('click', toggleListEditMode);
+  el.btnAddSignal.addEventListener('click', addSignal);
+  el.btnRouteEditorClose.addEventListener('click', closeRouteEditor);
+  el.routeEditorOverlay.addEventListener('click', (e) => {
+    if(e.target === el.routeEditorOverlay) closeRouteEditor();
+  });
+  el.btnRouteEditorSave.addEventListener('click', saveRouteEditor);
+  el.btnRouteEditorDelete.addEventListener('click', deleteRouteFromEditor);
+  el.btnEditCities.addEventListener('click', () => openRouteEditor(state.routeId));
+  el.langSwitcher.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => setLanguage(b.dataset.lang));
+  });
+
+  // init
+  (async function init(){
+    try{
+      const res = await window.storage.get('app:lang');
+      if(res && res.value && I18N[res.value]) state.lang = res.value;
+    }catch(e){ /* default 'ar' */ }
+    applyStaticI18n();
+
+    state.routes = await loadRoutes();
+    state.routeId = await loadActiveRouteId(state.routes);
+    renderRouteTabs();
+    await switchDirection('A2B');
+  })();
+})();
+</script>
+
+</body>
+</html>

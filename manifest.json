@@ -1,0 +1,27 @@
+{
+  "name": "دربك · عدّاد الإشارات",
+  "short_name": "دربك",
+  "description": "عدّاد إشارات الطريق بين نزيب وعنتاب - يقدّر الوقت المتبقي لكل إشارة ضوئية اعتمادًا على متوسط أزمنتك السابقة.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10151a",
+  "theme_color": "#0d6b47",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
