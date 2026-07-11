@@ -806,7 +806,10 @@ body{
     </div>
 
     <div class="actions">
-      <button class="btn btn-stop" id="btnPrimary" data-i18n="signal.btnStopped">توقفت (أحمر)</button>
+      <div class="row-2" id="idleActionsRow">
+        <button class="btn btn-stop" id="btnPrimary" data-i18n="signal.btnStopped">توقفت (أحمر)</button>
+        <button class="btn btn-green" id="btnStartGreen" data-i18n="signal.btnStartGreen">مشيت (أخضر)</button>
+      </div>
       <div class="row-2">
         <button class="btn btn-ghost" id="btnNext" data-i18n="signal.btnNext">الإشارة التالية ←</button>
         <button class="btn btn-ghost muted" id="btnReset" data-i18n="signal.btnResetTrip">إعادة الرحلة</button>
@@ -937,6 +940,7 @@ body{
       'signal.firstRecordGreen': '🟢 قيد العد — أول تسجيل لهذه الإشارة',
       'signal.remainingToRed': '🟢 متبقٍ تقريبًا حتى الأحمر',
       'signal.btnStopped': 'توقفت (أحمر)',
+      'signal.btnStartGreen': 'مشيت (أخضر)',
       'signal.btnTurnedGreen': 'تحوّلت خضراء ✓',
       'signal.btnBackToRed': 'رجعت حمراء',
       'signal.btnNext': 'الإشارة التالية ←',
@@ -992,6 +996,7 @@ body{
       'signal.firstRecordGreen': '🟢 Timing — first record for this signal',
       'signal.remainingToRed': '🟢 Approx. remaining until red',
       'signal.btnStopped': 'Stopped (Red)',
+      'signal.btnStartGreen': 'Started (Green)',
       'signal.btnTurnedGreen': 'Turned green ✓',
       'signal.btnBackToRed': 'Back to red',
       'signal.btnNext': 'Next signal →',
@@ -1047,6 +1052,7 @@ body{
       'signal.firstRecordGreen': '🟢 Sayılıyor — bu sinyal için ilk kayıt',
       'signal.remainingToRed': '🟢 Kırmızıya kadar yaklaşık kalan süre',
       'signal.btnStopped': 'Durdum (Kırmızı)',
+      'signal.btnStartGreen': 'Yürüdüm (Yeşil)',
       'signal.btnTurnedGreen': 'Yeşile döndü ✓',
       'signal.btnBackToRed': 'Kırmızıya döndü',
       'signal.btnNext': 'Sonraki sinyal →',
@@ -1105,6 +1111,7 @@ body{
     timer: document.getElementById('timer'),
     timerText: document.getElementById('timerText'),
     btnPrimary: document.getElementById('btnPrimary'),
+    btnStartGreen: document.getElementById('btnStartGreen'),
     btnNext: document.getElementById('btnNext'),
     btnReset: document.getElementById('btnReset'),
     statsToggle: document.getElementById('statsToggle'),
@@ -1451,6 +1458,7 @@ body{
       el.phaseLabel.textContent = redAvg !== null ? t('signal.remainingToGreen') : t('signal.firstRecordRed');
       el.btnPrimary.textContent = t('signal.btnTurnedGreen');
       el.btnPrimary.className = 'btn btn-green';
+      el.btnStartGreen.style.display = 'none';
     } else if(state.phase === 'green'){
       el.signalCard.classList.add('state-green');
       el.timer.classList.remove('idle');
@@ -1459,6 +1467,7 @@ body{
       el.phaseLabel.textContent = greenAvg !== null ? t('signal.remainingToRed') : t('signal.firstRecordGreen');
       el.btnPrimary.textContent = t('signal.btnBackToRed');
       el.btnPrimary.className = 'btn btn-stop';
+      el.btnStartGreen.style.display = 'none';
     } else {
       el.timer.classList.remove('running','overtime');
       el.timer.classList.add('idle');
@@ -1466,6 +1475,8 @@ body{
       el.timerText.textContent = localizeDigits('0:00');
       el.btnPrimary.textContent = t('signal.btnStopped');
       el.btnPrimary.className = 'btn btn-stop';
+      el.btnStartGreen.textContent = t('signal.btnStartGreen');
+      el.btnStartGreen.style.display = '';
     }
   }
 
@@ -1562,6 +1573,13 @@ body{
 
   function startRed(){
     state.phase = 'red';
+    state.startTs = Date.now();
+    renderSignalCard();
+    runTicker();
+  }
+
+  function startGreen(){
+    state.phase = 'green';
     state.startTs = Date.now();
     renderSignalCard();
     runTicker();
@@ -1770,6 +1788,9 @@ body{
   // events
   el.dirBtns.forEach(b => b.addEventListener('click', () => switchDirection(b.dataset.dircode)));
   el.btnPrimary.addEventListener('click', togglePhase);
+  el.btnStartGreen.addEventListener('click', () => {
+    if(state.phase === 'idle') startGreen();
+  });
   el.btnNext.addEventListener('click', nextSignal);
   el.btnReset.addEventListener('click', resetTrip);
   el.btnEditName.addEventListener('click', startEditName);
