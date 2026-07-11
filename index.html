@@ -871,6 +871,18 @@ body{
       </div>
     </div>
 
+    <div class="about-block">
+      <div class="about-label" data-i18n="backup.label">النسخ الاحتياطي للبيانات</div>
+      <div class="about-value about-desc" id="storageModeNote" data-i18n="backup.storageModeLocal">
+        بياناتك محفوظة محليًا على هذا الجهاز فقط. يُنصح بأخذ نسخة احتياطية بين حين وآخر.
+      </div>
+      <div class="row-2" style="margin-top:10px;">
+        <button class="btn btn-ghost" id="btnBackupExport" data-i18n="backup.exportBtn">⬇️ تصدير نسخة احتياطية</button>
+        <button class="btn btn-ghost" id="btnBackupImport" data-i18n="backup.importBtn">⬆️ استيراد نسخة احتياطية</button>
+      </div>
+      <input type="file" id="backupFileInput" accept="application/json" style="display:none;">
+    </div>
+
     <div class="about-copyright" data-i18n="about.copyright">
       جميع الحقوق محفوظة © دربك
     </div>
@@ -903,6 +915,70 @@ body{
 (function(){
   const N = 10;
   const DEFAULT_ROUTE = { id: 'default', cityA: 'نزيب', cityB: 'عنتاب' };
+
+  // ---------- unified storage layer ----------
+  // window.storage only exists inside the Claude.ai artifact preview.
+  // When this file runs as a plain static site (e.g. GitHub Pages), we
+  // transparently fall back to localStorage so data still persists on
+  // the user's device between visits.
+  const LS_PREFIX = 'darbak:';
+  const hasNativeStorage = (typeof window !== 'undefined') &&
+    !!window.storage &&
+    typeof window.storage.get === 'function' &&
+    typeof window.storage.set === 'function' &&
+    typeof window.storage.delete === 'function';
+
+  function lsGet(key){
+    try{
+      const raw = localStorage.getItem(LS_PREFIX + key);
+      if(raw === null) return null;
+      return { key: key, value: raw, shared: false };
+    }catch(e){ return null; }
+  }
+  function lsSet(key, value){
+    localStorage.setItem(LS_PREFIX + key, value);
+    return { key: key, value: value, shared: false };
+  }
+  function lsDelete(key){
+    localStorage.removeItem(LS_PREFIX + key);
+    return { key: key, deleted: true, shared: false };
+  }
+  function lsAllKeys(){
+    const keys = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k && k.indexOf(LS_PREFIX) === 0) keys.push(k.slice(LS_PREFIX.length));
+      }
+    }catch(e){ /* ignore */ }
+    return keys;
+  }
+
+  const Store = {
+    backend: hasNativeStorage ? 'native' : 'local',
+    async get(key){
+      if(hasNativeStorage){
+        try{ return await window.storage.get(key); }
+        catch(e){ return null; }
+      }
+      return lsGet(key);
+    },
+    async set(key, value){
+      if(hasNativeStorage){
+        return await window.storage.set(key, value);
+      }
+      return lsSet(key, value);
+    },
+    async delete(key){
+      if(hasNativeStorage){
+        try{ return await window.storage.delete(key); }
+        catch(e){ return null; }
+      }
+      return lsDelete(key);
+    },
+    // Only meaningful in local-storage mode; used for backup export.
+    allLocalKeys(){ return hasNativeStorage ? null : lsAllKeys(); }
+  };
 
   const I18N = {
     ar: {
@@ -959,6 +1035,15 @@ body{
       'about.developerName': 'محمود أحمد بيضون',
       'about.aboutLabel': 'عن التطبيق',
       'about.desc': 'يساعدك دربك على تقدير الوقت المتبقي لكل إشارة ضوئية على خط سيرك، اعتمادًا على متوسط الأزمنة التي سجّلتها بنفسك أثناء رحلاتك السابقة.',
+      'backup.label': 'النسخ الاحتياطي للبيانات',
+      'backup.storageModeLocal': 'بياناتك محفوظة محليًا على هذا الجهاز فقط. يُنصح بأخذ نسخة احتياطية بين حين وآخر، خصوصًا قبل تغيير الجهاز أو مسح بيانات المتصفح.',
+      'backup.storageModeNative': 'بياناتك محفوظة ضمن حسابك. يمكنك أيضًا أخذ نسخة احتياطية بصيغة ملف لحفظها لديك.',
+      'backup.exportBtn': '⬇️ تصدير نسخة احتياطية',
+      'backup.importBtn': '⬆️ استيراد نسخة احتياطية',
+      'backup.confirmImport': 'سيتم استبدال كل بياناتك الحالية (خطوط السير، الإشارات، الأزمنة المسجّلة) بمحتوى ملف النسخة الاحتياطية. هل تريد المتابعة؟',
+      'backup.importSuccess': 'تم استيراد النسخة الاحتياطية بنجاح ✓',
+      'backup.importError': 'تعذّر استيراد الملف — تأكد أنه ملف نسخة احتياطية صالح من دربك.',
+      'backup.exportError': 'تعذّر إنشاء النسخة الاحتياطية.',
       'about.copyright': 'جميع الحقوق محفوظة © دربك',
     },
     en: {
@@ -1015,6 +1100,15 @@ body{
       'about.developerName': 'MAHMUD BEYDUN',
       'about.aboutLabel': 'About the app',
       'about.desc': "Darbak helps you estimate the remaining time for each traffic light on your route, based on the average durations you've recorded from your previous trips.",
+      'backup.label': 'Data backup',
+      'backup.storageModeLocal': 'Your data is stored locally on this device only. It\'s a good idea to export a backup now and then, especially before switching devices or clearing browser data.',
+      'backup.storageModeNative': 'Your data is stored in your account. You can also export a backup file to keep for yourself.',
+      'backup.exportBtn': '⬇️ Export backup',
+      'backup.importBtn': '⬆️ Import backup',
+      'backup.confirmImport': 'This will replace all your current data (routes, signals, recorded times) with the contents of the backup file. Continue?',
+      'backup.importSuccess': 'Backup imported successfully ✓',
+      'backup.importError': "Couldn't import the file — make sure it's a valid Darbak backup file.",
+      'backup.exportError': "Couldn't create the backup.",
       'about.copyright': 'All rights reserved © Darbak',
     },
     tr: {
@@ -1071,6 +1165,15 @@ body{
       'about.developerName': 'MAHMUD BEYDUN',
       'about.aboutLabel': 'Uygulama hakkında',
       'about.desc': 'Darbak, önceki yolculuklarınızda kaydettiğiniz ortalama sürelere dayanarak, güzergahınızdaki her trafik ışığında kalan süreyi tahmin etmenize yardımcı olur.',
+      'backup.label': 'Veri yedekleme',
+      'backup.storageModeLocal': 'Verileriniz yalnızca bu cihazda yerel olarak saklanıyor. Özellikle cihaz değiştirmeden veya tarayıcı verilerini silmeden önce ara sıra yedek almanız önerilir.',
+      'backup.storageModeNative': 'Verileriniz hesabınızda saklanıyor. İsterseniz saklamak için bir yedek dosyası da dışa aktarabilirsiniz.',
+      'backup.exportBtn': '⬇️ Yedeği dışa aktar',
+      'backup.importBtn': '⬆️ Yedeği içe aktar',
+      'backup.confirmImport': 'Bu işlem mevcut tüm verilerinizi (güzergahlar, sinyaller, kaydedilen süreler) yedek dosyasının içeriğiyle değiştirecek. Devam edilsin mi?',
+      'backup.importSuccess': 'Yedek başarıyla içe aktarıldı ✓',
+      'backup.importError': 'Dosya içe aktarılamadı — geçerli bir Darbak yedek dosyası olduğundan emin olun.',
+      'backup.exportError': 'Yedek oluşturulamadı.',
       'about.copyright': 'Tüm hakları saklıdır © Darbak',
     },
   };
@@ -1140,6 +1243,10 @@ body{
     subtitleText: document.getElementById('subtitleText'),
     langSwitcher: document.getElementById('langSwitcher'),
     aboutDeveloperName: document.getElementById('aboutDeveloperName'),
+    storageModeNote: document.getElementById('storageModeNote'),
+    btnBackupExport: document.getElementById('btnBackupExport'),
+    btnBackupImport: document.getElementById('btnBackupImport'),
+    backupFileInput: document.getElementById('backupFileInput'),
   };
 
   const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
@@ -1175,7 +1282,7 @@ body{
 
   async function loadDirection(dir){
     try{
-      const res = await window.storage.get('route-signals:' + dir);
+      const res = await Store.get('route-signals:' + dir);
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         if(Array.isArray(parsed) && parsed.length >= 1) return parsed.map(migrateItem);
@@ -1188,7 +1295,7 @@ body{
     const payload = JSON.stringify(data);
     for(let attempt = 0; attempt < 2; attempt++){
       try{
-        await window.storage.set('route-signals:' + dir, payload);
+        await Store.set('route-signals:' + dir, payload);
         return true;
       }catch(e){
         console.error('تعذّر حفظ البيانات (محاولة ' + (attempt+1) + ')', e);
@@ -1200,7 +1307,7 @@ body{
   // ---------- routes (saved city pairs, each with its own persisted signals) ----------
   async function loadRoutes(){
     try{
-      const res = await window.storage.get('routes:index');
+      const res = await Store.get('routes:index');
       if(res && res.value){
         const parsed = JSON.parse(res.value);
         if(Array.isArray(parsed) && parsed.length && parsed.every(r => r && r.id && r.cityA && r.cityB)){
@@ -1212,20 +1319,20 @@ body{
   }
 
   async function saveRoutes(routes){
-    try{ await window.storage.set('routes:index', JSON.stringify(routes)); }
+    try{ await Store.set('routes:index', JSON.stringify(routes)); }
     catch(e){ console.error('تعذّر حفظ قائمة خطوط السير', e); }
   }
 
   async function loadActiveRouteId(routes){
     try{
-      const res = await window.storage.get('routes:active');
+      const res = await Store.get('routes:active');
       if(res && res.value && routes.some(r => r.id === res.value)) return res.value;
     }catch(e){ /* not found -> first route */ }
     return routes[0].id;
   }
 
   async function saveActiveRouteId(id){
-    try{ await window.storage.set('routes:active', id); }
+    try{ await Store.set('routes:active', id); }
     catch(e){ console.error('تعذّر حفظ خط السير النشط', e); }
   }
 
@@ -1235,12 +1342,108 @@ body{
 
   // The default route keeps using its original storage keys (nizip-antep / antep-nizip)
   // so existing data for people already using the app is never lost or migrated.
-  function storageKeyFor(dirCode){
-    const route = currentRoute();
+  function storageKeyForRoute(route, dirCode){
     if(route.id === 'default'){
       return dirCode === 'A2B' ? 'nizip-antep' : 'antep-nizip';
     }
     return route.id + ':' + dirCode;
+  }
+
+  function storageKeyFor(dirCode){
+    return storageKeyForRoute(currentRoute(), dirCode);
+  }
+
+  // ---------- backup / restore ----------
+  const BACKUP_VERSION = 1;
+
+  async function buildBackupPayload(){
+    const routes = await loadRoutes();
+    const activeRouteId = await loadActiveRouteId(routes);
+    let lang = state.lang;
+    try{
+      const res = await Store.get('app:lang');
+      if(res && res.value) lang = res.value;
+    }catch(e){ /* keep current */ }
+
+    const signals = {};
+    for(const route of routes){
+      for(const dirCode of ['A2B','B2A']){
+        const key = storageKeyForRoute(route, dirCode);
+        try{
+          const res = await Store.get('route-signals:' + key);
+          if(res && res.value) signals[key] = JSON.parse(res.value);
+        }catch(e){ /* no data for this key */ }
+      }
+    }
+
+    return {
+      app: 'darbak',
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      lang: lang,
+      activeRouteId: activeRouteId,
+      routes: routes,
+      signals: signals
+    };
+  }
+
+  async function exportBackup(){
+    try{
+      const payload = await buildBackupPayload();
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const stamp = new Date().toISOString().slice(0,10);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'darbak-backup-' + stamp + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }catch(e){
+      console.error('تعذّر إنشاء النسخة الاحتياطية', e);
+      alert(t('backup.exportError'));
+    }
+  }
+
+  function isValidBackup(payload){
+    return payload && payload.app === 'darbak' &&
+      Array.isArray(payload.routes) && payload.routes.length > 0 &&
+      payload.routes.every(r => r && r.id && r.cityA && r.cityB) &&
+      payload.signals && typeof payload.signals === 'object';
+  }
+
+  async function importBackupFromFile(file){
+    let payload;
+    try{
+      const text = await file.text();
+      payload = JSON.parse(text);
+    }catch(e){
+      alert(t('backup.importError'));
+      return;
+    }
+    if(!isValidBackup(payload)){
+      alert(t('backup.importError'));
+      return;
+    }
+    if(!confirm(t('backup.confirmImport'))) return;
+
+    try{
+      await saveRoutes(payload.routes);
+      await saveActiveRouteId(payload.activeRouteId || payload.routes[0].id);
+      if(payload.lang && I18N[payload.lang]){
+        await Store.set('app:lang', payload.lang);
+      }
+      for(const key of Object.keys(payload.signals)){
+        await Store.set('route-signals:' + key, JSON.stringify(payload.signals[key]));
+      }
+      alert(t('backup.importSuccess'));
+      location.reload();
+    }catch(e){
+      console.error('تعذّر استيراد النسخة الاحتياطية', e);
+      alert(t('backup.importError'));
+    }
   }
 
   function makeRouteId(){
@@ -1275,6 +1478,7 @@ body{
     });
 
     el.aboutDeveloperName.textContent = t('about.developerName');
+    el.storageModeNote.textContent = t(Store.backend === 'native' ? 'backup.storageModeNative' : 'backup.storageModeLocal');
 
     el.langSwitcher.querySelectorAll('.lang-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.lang === state.lang);
@@ -1286,7 +1490,7 @@ body{
   async function setLanguage(lang){
     if(!I18N[lang]) return;
     state.lang = lang;
-    try{ await window.storage.set('app:lang', lang); }catch(e){ /* ignore */ }
+    try{ await Store.set('app:lang', lang); }catch(e){ /* ignore */ }
     applyStaticI18n();
     renderAll();
     renderRouteTabs();
@@ -1771,7 +1975,7 @@ body{
     // best-effort cleanup of stored signal data for both directions of this route
     for(const code of ['A2B','B2A']){
       const key = route.id === 'default' ? (code === 'A2B' ? 'nizip-antep' : 'antep-nizip') : (route.id + ':' + code);
-      try{ await window.storage.delete('route-signals:' + key); }catch(e){ /* ignore */ }
+      try{ await Store.delete('route-signals:' + key); }catch(e){ /* ignore */ }
     }
 
     state.routes = state.routes.filter(r => r.id !== editingRouteId);
@@ -1808,6 +2012,13 @@ body{
   });
   el.btnAbout.addEventListener('click', () => el.aboutOverlay.classList.add('open'));
   el.btnAboutClose.addEventListener('click', () => el.aboutOverlay.classList.remove('open'));
+  el.btnBackupExport.addEventListener('click', exportBackup);
+  el.btnBackupImport.addEventListener('click', () => el.backupFileInput.click());
+  el.backupFileInput.addEventListener('change', () => {
+    const file = el.backupFileInput.files && el.backupFileInput.files[0];
+    el.backupFileInput.value = '';
+    if(file) importBackupFromFile(file);
+  });
   el.aboutOverlay.addEventListener('click', (e) => {
     if(e.target === el.aboutOverlay) el.aboutOverlay.classList.remove('open');
   });
@@ -1827,7 +2038,7 @@ body{
   // init
   (async function init(){
     try{
-      const res = await window.storage.get('app:lang');
+      const res = await Store.get('app:lang');
       if(res && res.value && I18N[res.value]) state.lang = res.value;
     }catch(e){ /* default 'ar' */ }
     applyStaticI18n();
